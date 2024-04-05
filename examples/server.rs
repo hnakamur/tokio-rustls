@@ -6,7 +6,7 @@ use std::sync::Arc;
 
 use argh::FromArgs;
 use pki_types::{CertificateDer, PrivateKeyDer};
-use rustls_pemfile::{certs, rsa_private_keys};
+use rustls_pemfile::{certs, pkcs8_private_keys};
 use tokio::io::{copy, sink, split, AsyncWriteExt};
 use tokio::net::TcpListener;
 use tokio_rustls::{rustls, TlsAcceptor};
@@ -36,7 +36,7 @@ fn load_certs(path: &Path) -> io::Result<Vec<CertificateDer<'static>>> {
 }
 
 fn load_keys(path: &Path) -> io::Result<PrivateKeyDer<'static>> {
-    rsa_private_keys(&mut BufReader::new(File::open(path)?))
+    pkcs8_private_keys(&mut BufReader::new(File::open(path)?))
         .next()
         .unwrap()
         .map(Into::into)
