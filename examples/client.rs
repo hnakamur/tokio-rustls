@@ -28,6 +28,10 @@ struct Options {
     /// cafile
     #[argh(option, short = 'c')]
     cafile: Option<PathBuf>,
+
+    /// echo mode
+    #[argh(switch, short = 'e')]
+    echo_mode: bool,
 }
 
 #[tokio::main]
@@ -69,14 +73,19 @@ async fn main() -> io::Result<()> {
 
     let (mut reader, mut writer) = split(stream);
 
-    tokio::select! {
-        ret = copy(&mut reader, &mut stdout) => {
-            ret?;
-        },
-        ret = copy(&mut stdin, &mut writer) => {
-            ret?;
-            writer.shutdown().await?
+    if options.echo_mode {
+        tokio::select! {
+            ret = copy(&mut reader, &mut stdout) => {
+                ret?;
+            },
+            ret = copy(&mut stdin, &mut writer) => {
+                ret?;
+                writer.shutdown().await?
+            }
         }
+    } else {
+        writer.shutdown().await?;
+        copy(&mut reader, &mut stdout).await?;
     }
 
     Ok(())
